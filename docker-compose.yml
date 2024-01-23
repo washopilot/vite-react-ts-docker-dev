@@ -1,8 +1,8 @@
-version: '3'
+version: '3.9'
 services:
     development:
         build:
-            context: .
+            context: ./
             dockerfile: Dockerfile
             target: development
         ports:
@@ -15,10 +15,25 @@ services:
                   path: ./
                   target: /app
                   ignore:
-                      - node_modules/
-                      - .git/
+                      - ./node_modules
+                      - ./.git
+                      - ./.vscode
+                      - ./package*.json
                 - action: rebuild
-                  path: package*.json
+                  path: ./package.json
+        depends_on:
+            npm:
+                condition: service_completed_successfully
+
+    npm:
+        image: node:20-alpine
+        user: 1000:1000
+        working_dir: /code
+        command: npm install
+        networks:
+            - internal
+        volumes:
+            - ./:/code
 
 networks:
     internal:
