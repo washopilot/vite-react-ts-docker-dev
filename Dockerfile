@@ -1,22 +1,15 @@
 FROM node:20-alpine as base
-ARG WWWUSER
-ARG WWWGROUP
-RUN addgroup ${WWWGROUP} && adduser -S -G ${WWWGROUP} ${WWWUSER}
+RUN addgroup app && adduser -S -G app app
 
 FROM base as cache
-RUN \
-    apk add --no-cache rsync; \
-    apk add --no-cache libc6-compat
-WORKDIR /cache
+WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci -d && npm cache clean --force    
 
 FROM cache as development
-USER ${WWWUSER}:${WWWGROUP}
-WORKDIR /app
-# COPY --chown=app:app . .
+RUN chown -R app:app /app
+COPY --chown=app:app . .
+USER app
 
-# CMD [ "sleep", "infintly" ]
 CMD \
-    sh -c "rsync -arv /cache/node_modules/. /app/node_modules" && \
     npm run dev -- --host; 
